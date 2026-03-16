@@ -20,8 +20,8 @@ DRY_RUN            ?=
 AUTO_APPROVE       ?=
 # Derived flags from boolean variables (only true/1 are treated as truthy)
 TRUTHY_VALUES     := true 1
-DRY_RUN_FLAG      := $(if $(filter $(TRUTHY_VALUES),$(DRY_RUN)),--dry-run)
-AUTO_APPROVE_FLAG := $(if $(filter $(TRUTHY_VALUES),$(AUTO_APPROVE)),-auto-approve)
+DRY_RUN_FLAG      := $(if $(filter $(TRUTHY_VALUES),$(strip $(DRY_RUN))),--dry-run)
+AUTO_APPROVE_FLAG := $(if $(filter $(TRUTHY_VALUES),$(strip $(AUTO_APPROVE))),-auto-approve)
 
 # Chart source configuration (helm-git plugin)
 # Chart refs are independent of image tags so that overriding an image tag
@@ -293,9 +293,9 @@ plan-terraform: check-terraform check-tf-files ## Run terraform plan (preview on
 # validate-chart: validate a single Helm chart with helm template
 # Usage: $(call validate-chart,<chart-name>,<chart-ref>,<helm-template-args>)
 define validate-chart
+	@echo "Validating $(1) chart..."
 	$(call set-chart-ref,$(HELM_DIR)/$(1),$(2))
 	helm dependency update $(HELM_DIR)/$(1)
-	@echo "Validating $(1) chart..."
 	helm template $(NAMESPACE)-$(1) $(HELM_DIR)/$(1) $(3) > /dev/null
 endef
 
