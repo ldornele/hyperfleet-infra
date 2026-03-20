@@ -63,7 +63,7 @@ if [[ "$BROKER_TYPE" == "googlepubsub" ]]; then
   for resource_type in clusters nodepools; do
     file="${OUT_DIR}/sentinel-${resource_type}.yaml"
     cat > "$file" <<EOF
-sentinel:
+hyperfleet-sentinel:
   broker:
     type: ${BROKER_TYPE}
     topic: ${NS}-${resource_type}
@@ -84,8 +84,8 @@ hyperfleet-adapter:
   broker:
     type: ${BROKER_TYPE}
     googlepubsub:
-      project_id: ${PROJECT_ID}
-      subscription_id: ${NS}-${topic}-${adapter}
+      projectId: ${PROJECT_ID}
+      subscriptionId: ${NS}-${topic}-${adapter}
       topic: ${NS}-${topic}
 EOF
     echo "  wrote ${file}"
@@ -116,7 +116,7 @@ elif [[ "$BROKER_TYPE" == "rabbitmq" ]]; then
   for resource_type in clusters nodepools; do
     file="${OUT_DIR}/sentinel-${resource_type}.yaml"
     cat > "$file" <<EOF
-sentinel:
+hyperfleet-sentinel:
   broker:
     type: rabbitmq
     topic: ${NS}-${resource_type}

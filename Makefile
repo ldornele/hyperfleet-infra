@@ -175,10 +175,10 @@ install-sentinel-clusters: check-helm check-kubectl check-namespace ## Install S
 	helm upgrade --install $(DRY_RUN_FLAG) $(NAMESPACE)-sentinel-clusters $(HELM_DIR)/sentinel-clusters \
 		--namespace $(NAMESPACE) \
 		--kubeconfig $(KUBECONFIG) \
-		--set sentinel.broker.type=$(BROKER_TYPE) \
-		$(if $(REGISTRY),--set sentinel.image.registry=$(REGISTRY)) \
-		$(if $(SENTINEL_REPOSITORY),--set sentinel.image.repository=$(SENTINEL_REPOSITORY)) \
-		--set sentinel.image.tag=$(SENTINEL_IMAGE_TAG) \
+		--set hyperfleet-sentinel.broker.type=$(BROKER_TYPE) \
+		$(if $(REGISTRY),--set hyperfleet-sentinel.image.registry=$(REGISTRY)) \
+		$(if $(SENTINEL_REPOSITORY),--set hyperfleet-sentinel.image.repository=$(SENTINEL_REPOSITORY)) \
+		--set hyperfleet-sentinel.image.tag=$(SENTINEL_IMAGE_TAG) \
 		$(if $(wildcard $(GENERATED_DIR)/sentinel-clusters.yaml),--values $(GENERATED_DIR)/sentinel-clusters.yaml)
 
 .PHONY: install-sentinel-nodepools
@@ -188,10 +188,10 @@ install-sentinel-nodepools: check-helm check-kubectl check-namespace ## Install 
 	helm upgrade --install $(DRY_RUN_FLAG) $(NAMESPACE)-sentinel-nodepools $(HELM_DIR)/sentinel-nodepools \
 		--namespace $(NAMESPACE) \
 		--kubeconfig $(KUBECONFIG) \
-		--set sentinel.broker.type=$(BROKER_TYPE) \
-		$(if $(REGISTRY),--set sentinel.image.registry=$(REGISTRY)) \
-		$(if $(SENTINEL_REPOSITORY),--set sentinel.image.repository=$(SENTINEL_REPOSITORY)) \
-		--set sentinel.image.tag=$(SENTINEL_IMAGE_TAG) \
+		--set hyperfleet-sentinel.broker.type=$(BROKER_TYPE) \
+		$(if $(REGISTRY),--set hyperfleet-sentinel.image.registry=$(REGISTRY)) \
+		$(if $(SENTINEL_REPOSITORY),--set hyperfleet-sentinel.image.repository=$(SENTINEL_REPOSITORY)) \
+		--set hyperfleet-sentinel.image.tag=$(SENTINEL_IMAGE_TAG) \
 		$(if $(wildcard $(GENERATED_DIR)/sentinel-nodepools.yaml),--values $(GENERATED_DIR)/sentinel-nodepools.yaml)
 
 .PHONY: install-adapter1
@@ -321,16 +321,16 @@ validate-helm-charts: check-helm ## Render all Helm charts with helm template (n
 		--set hyperfleet-api.image.tag=$(API_IMAGE_TAG))
 
 	$(call validate-chart,sentinel-clusters,$(SENTINEL_CHART_REF),\
-		--set sentinel.broker.type=$(BROKER_TYPE) \
-		$(if $(REGISTRY),--set sentinel.image.registry=$(REGISTRY)) \
-		$(if $(SENTINEL_REPOSITORY),--set sentinel.image.repository=$(SENTINEL_REPOSITORY)) \
-		--set sentinel.image.tag=$(SENTINEL_IMAGE_TAG))
+		--set hyperfleet-sentinel.broker.type=$(BROKER_TYPE) \
+		$(if $(REGISTRY),--set hyperfleet-sentinel.image.registry=$(REGISTRY)) \
+		$(if $(SENTINEL_REPOSITORY),--set hyperfleet-sentinel.image.repository=$(SENTINEL_REPOSITORY)) \
+		--set hyperfleet-sentinel.image.tag=$(SENTINEL_IMAGE_TAG))
 
 	$(call validate-chart,sentinel-nodepools,$(SENTINEL_CHART_REF),\
-		--set sentinel.broker.type=$(BROKER_TYPE) \
-		$(if $(REGISTRY),--set sentinel.image.registry=$(REGISTRY)) \
-		$(if $(SENTINEL_REPOSITORY),--set sentinel.image.repository=$(SENTINEL_REPOSITORY)) \
-		--set sentinel.image.tag=$(SENTINEL_IMAGE_TAG))
+		--set hyperfleet-sentinel.broker.type=$(BROKER_TYPE) \
+		$(if $(REGISTRY),--set hyperfleet-sentinel.image.registry=$(REGISTRY)) \
+		$(if $(SENTINEL_REPOSITORY),--set hyperfleet-sentinel.image.repository=$(SENTINEL_REPOSITORY)) \
+		--set hyperfleet-sentinel.image.tag=$(SENTINEL_IMAGE_TAG))
 
 	$(call validate-chart,adapter1,$(ADAPTER_CHART_REF),\
 		--set hyperfleet-adapter.broker.type=$(BROKER_TYPE) \

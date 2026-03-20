@@ -3,8 +3,8 @@
 hyperfleet-adapter:
   image:
     # make install will substitute this by data coming from terraform
-    registry: CHANGE_THIS
-    repository: hyperfleet-adapter
+    registry: CHANGE_ME
+    repository: CHANGE_ME
     tag: latest
 
   adapterConfig:
@@ -23,20 +23,20 @@ hyperfleet-adapter:
     type: googlepubsub
     googlepubsub:
       # make install will substitute this by data coming from terraform
-      project_id: CHANGE_THIS
+      projectId: CHANGE_ME
       # make install will substitute this by data coming from terraform
-      subscription_id: CHANGE_THIS
+      subscriptionId: CHANGE_ME
       # make install will substitute this by data coming from terraform
-      topic: CHANGE_THIS
-      dead_letter_topic: ""
-      create_topic_if_missing: true
-      create_subscription_if_missing: true
+      topic: CHANGE_ME
+      deadLetterTopic: ""
+      createTopicIfMissing: true
+      createSubscriptionIfMissing: true
     rabbitmq:
       # make install will substitute this by data coming from tf-helm-values.sh
-      url: CHANGE_THIS
+      url: CHANGE_ME
       queue: ""
       exchange: ""
-      routing_key: ""
+      routingKey: ""
 
   env:
     - name: SIMULATE_RESULT

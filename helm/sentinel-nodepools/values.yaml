@@ -1,9 +1,9 @@
 # Default values for Sentinel (nodepools)
 
-sentinel:
+hyperfleet-sentinel:
   image:
     # make install will substitute this by data coming from terraform
-    registry: CHANGE_THIS
+    registry: CHANGE_ME
 
   config:
     resourceType: nodepools
@@ -23,11 +23,11 @@ sentinel:
   broker:
     type: googlepubsub
     # make install will substitute this by data coming from terraform
-    topic: CHANGE_THIS
+    topic: CHANGE_ME
     googlepubsub:
       # make install will substitute this by data coming from terraform
-      projectId: CHANGE_THIS
+      projectId: CHANGE_ME
     rabbitmq:
       # make install will substitute this by data coming from tf-helm-values.sh
-      url: CHANGE_THIS
+      url: CHANGE_ME
       exchangeType: topic

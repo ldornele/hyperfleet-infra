@@ -3,7 +3,7 @@
 hyperfleet-api:
   image:
     # make install will substitute this by data coming from terraform
-    registry: CHANGE_THIS
+    registry: CHANGE_ME
   database:
     postgresql:
       enabled: true
