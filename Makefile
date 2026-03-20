@@ -132,11 +132,16 @@ install-maestro: check-helm check-kubectl check-maestro-namespace ## Install Mae
 .PHONY: create-maestro-consumer
 create-maestro-consumer: check-kubectl ## Create a Maestro consumer (requires Maestro server running)
 	@echo "Creating Maestro consumer '$(MAESTRO_CONSUMER)'..."
-	@kubectl exec deploy/maestro --namespace $(MAESTRO_NS) --kubeconfig $(KUBECONFIG) -- \
-		curl -sf -X POST \
-		-H "Content-Type: application/json" \
-		http://maestro.$(MAESTRO_NS).svc.cluster.local:8000/api/maestro/v1/consumers \
-		-d '{"name": "$(MAESTRO_CONSUMER)"}'
+	@for i in 1 2 3 4 5; do \
+		kubectl exec deploy/maestro --namespace $(MAESTRO_NS) --kubeconfig $(KUBECONFIG) -- \
+			curl -sf -X POST \
+			-H "Content-Type: application/json" \
+			http://maestro.$(MAESTRO_NS).svc.cluster.local:8000/api/maestro/v1/consumers \
+			-d '{"name": "$(MAESTRO_CONSUMER)"}' && exit 0; \
+		echo "  Attempt $$i failed, retrying in 5s..."; \
+		sleep 5; \
+	done; \
+	echo "ERROR: failed to create Maestro consumer after 5 attempts"; exit 1
 	@echo ""
 	@echo "OK: consumer '$(MAESTRO_CONSUMER)' created"
 
