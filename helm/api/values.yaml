@@ -11,9 +11,11 @@ hyperfleet-api:
   auth:
     enableJwt: false
 
-  adapters:
-    cluster:
-      - adapter1
-      - adapter2
-    nodepool:
-      - adapter3
+  config:
+    adapters:
+      required:
+        cluster:
+          - adapter1
+          - adapter2
+        nodepool:
+          - adapter3
