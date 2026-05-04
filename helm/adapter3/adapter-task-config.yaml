@@ -36,23 +36,23 @@ preconditions:
         field: "generation"
       - name: "is_deleting"
         expression: "nodepoolStatus.?deleted_time.hasValue()"
-      - name: "nodepoolNotReady"
+      - name: "nodepoolNotReconciled"
         expression: |
-          status.conditions.filter(c, c.type == "Ready").size() > 0
-            ? status.conditions.filter(c, c.type == "Ready")[0].status != "True"
+          status.conditions.filter(c, c.type == "Reconciled").size() > 0
+            ? status.conditions.filter(c, c.type == "Reconciled")[0].status != "True"
             : true
-      - name: "nodepoolReadyTTL"
+      - name: "nodepoolReconciledTTL"
         expression: |
           (timestamp(now()) - timestamp(
-            status.conditions.filter(c, c.type == "Ready").size() > 0
-              ? status.conditions.filter(c, c.type == "Ready")[0].last_transition_time
+            status.conditions.filter(c, c.type == "Reconciled").size() > 0
+              ? status.conditions.filter(c, c.type == "Reconciled")[0].last_transition_time
               : now()
           )).getSeconds() > 300
 
   - name: "validationCheck"
-    # Precondition passes if nodepool is NOT Ready OR if nodepool is Ready and stable for >300 seconds since last transition (enables self-healing) OR if nodepool is being deleted
+    # Precondition passes if nodepool is NOT Reconciled OR if nodepool is Reconciled and stable for >300 seconds since last transition (enables self-healing) OR if nodepool is being deleted
     expression: |
-      nodepoolNotReady || nodepoolReadyTTL || is_deleting
+      nodepoolNotReconciled || nodepoolReconciledTTL || is_deleting
 
 # Resources with valid K8s manifests
 resources:
@@ -130,17 +130,25 @@ post:
                 adapter.?executionStatus.orValue("") == "success" ? "True" : (adapter.?executionStatus.orValue("") == "failed" ? "False" : "Unknown")
             reason:
               expression: |
-                adapter.?errorReason.orValue("") != "" ? adapter.?errorReason.orValue("") : "Healthy"
+                adapter.?executionStatus.orValue("") == "failed"
+                  ? adapter.?errorReason.orValue("ExecutionFailed")
+                  : adapter.?executionStatus.orValue("") == "success"
+                    ? "Healthy"
+                    : "InProgress"
             message:
               expression: |
-                adapter.?errorMessage.orValue("") != "" ? adapter.?errorMessage.orValue("") : "All adapter operations completed successfully"
+                adapter.?executionStatus.orValue("") == "failed"
+                  ? adapter.?errorMessage.orValue("Adapter execution failed")
+                  : adapter.?executionStatus.orValue("") == "success"
+                    ? "All adapter operations completed successfully"
+                    : "Adapter execution in progress"
           # Finalized: Deletion lifecycle completion
           - type: "Finalized"
             status:
               expression: |
                 !is_deleting
                   ? "False"
-                  : (adapter.?executionStatus.orValue("") == "success" && !resources.?resource0.hasValue()
+                  : (!resources.?resource0.hasValue()
                       ? "True"
                       : "False")
             reason:

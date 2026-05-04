@@ -33,19 +33,19 @@ preconditions:
         field: "created_time"
       - name: "is_deleting"
         expression: "clusterStatus.?deleted_time.hasValue()"
-      - name: "readyConditionStatus"
+      - name: "reconciledConditionStatus"
         expression: |
-          status.conditions.filter(c, c.type == "Ready").size() > 0
-            ? status.conditions.filter(c, c.type == "Ready")[0].status
+          status.conditions.filter(c, c.type == "Reconciled").size() > 0
+            ? status.conditions.filter(c, c.type == "Reconciled")[0].status
             : "False"
       - name: "placementClusterName"
         expression: "\"cluster1\""  # TBC coming from placement adapter
 
   - name: "validationCheck"
-    # Precondition passes if cluster is NOT Ready (readyConditionStatus == "False") OR if cluster is being deleted
+    # Precondition passes if cluster is NOT Reconciled (reconciledConditionStatus == "False") OR if cluster is being deleted
     # Note: Unlike adapter1/adapter3, this adapter does not implement self-healing TTL checks
     expression: |
-      readyConditionStatus == "False" || is_deleting
+      reconciledConditionStatus == "False" || is_deleting
 
 # Resources with valid K8s manifests
 resources:
@@ -298,8 +298,7 @@ post:
               expression: |
                 !is_deleting
                   ? "False"
-                  : (adapter.?executionStatus.orValue("") == "success"
-                      && !resources.?resource0.hasValue()
+                  : (!resources.?resource0.hasValue()
                       && !resources.?namespace0.hasValue()
                       && !resources.?configmap0.hasValue()
                       ? "True"
