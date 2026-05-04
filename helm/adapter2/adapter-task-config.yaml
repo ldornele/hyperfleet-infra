@@ -41,6 +41,12 @@ preconditions:
       - name: "placementClusterName"
         expression: "\"cluster1\""  # TBC coming from placement adapter
 
+    # Structured conditions with valid operators
+    conditions:
+      - field: "reconciledConditionStatus"
+        operator: "equals"
+        value: "False"
+
   - name: "validationCheck"
     # Precondition passes if cluster is NOT Reconciled (reconciledConditionStatus == "False") OR if cluster is being deleted
     # Note: Unlike adapter1/adapter3, this adapter does not implement self-healing TTL checks
