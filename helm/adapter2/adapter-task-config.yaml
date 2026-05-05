@@ -31,6 +31,8 @@ preconditions:
         field: "generation"
       - name: "timestamp"
         field: "created_time"
+      - name: "is_deleting"
+        expression: "clusterStatus.?deleted_time.hasValue()"
       - name: "reconciledConditionStatus"
         expression: |
           status.conditions.filter(c, c.type == "Reconciled").size() > 0
@@ -46,9 +48,10 @@ preconditions:
         value: "False"
 
   - name: "validationCheck"
-    # Valid CEL expression
+    # Precondition passes if cluster is NOT Reconciled (reconciledConditionStatus == "False") OR if cluster is being deleted
+    # Note: Unlike adapter1/adapter3, this adapter does not implement self-healing TTL checks
     expression: |
-      reconciledConditionStatus == "False"
+      reconciledConditionStatus == "False" || is_deleting
 
 # Resources with valid K8s manifests
 resources:
@@ -208,6 +211,15 @@ resources:
         discovery:
           by_name: "{{ .clusterId | lower }}-{{ .adapter.name }}-configmap"
 
+    # Deletion lifecycle - ManifestWork deletion cascades to nested resources
+    lifecycle:
+      delete:
+        # Foreground propagation ensures nested resources (namespace, configmap) are deleted
+        # before the parent ManifestWork is removed, preventing orphaned resources
+        propagationPolicy: "Foreground"
+        when:
+          expression: "is_deleting"
+
 post:
   payloads:
     - name: "statusPayload"
@@ -218,47 +230,45 @@ post:
           - type: "Applied"
             status:
               expression: |
-                has(resources.resource0) && has(resources.resource0.status) && has(resources.resource0.status.conditions) && resources.resource0.status.conditions.filter(c, has(c.type) && c.type == "Applied").size() > 0 ? resources.resource0.status.conditions.filter(c, c.type == "Applied")[0].status : "False"
+                resources.?resource0.?status.?conditions.hasValue() && resources.resource0.status.conditions.filter(c, has(c.type) && c.type == "Applied").size() > 0 ? resources.resource0.status.conditions.filter(c, c.type == "Applied")[0].status : "False"
             reason:
               expression: |
-                has(resources.resource0) && has(resources.resource0.status) && has(resources.resource0.status.conditions) && resources.resource0.status.conditions.filter(c, has(c.type) && c.type == "Applied").size() > 0 ? resources.resource0.status.conditions.filter(c, c.type == "Applied")[0].reason : "ManifestWorkNotDiscovered"
+                resources.?resource0.?status.?conditions.hasValue() && resources.resource0.status.conditions.filter(c, has(c.type) && c.type == "Applied").size() > 0 ? resources.resource0.status.conditions.filter(c, c.type == "Applied")[0].reason : "ManifestWorkNotDiscovered"
             message:
               expression: |
-                has(resources.resource0) && has(resources.resource0.status) && has(resources.resource0.status.conditions) && resources.resource0.status.conditions.filter(c, has(c.type) && c.type == "Applied").size() > 0 ? resources.resource0.status.conditions.filter(c, c.type == "Applied")[0].message : "ManifestWork not discovered from Maestro or no Applied condition"
+                resources.?resource0.?status.?conditions.hasValue() && resources.resource0.status.conditions.filter(c, has(c.type) && c.type == "Applied").size() > 0 ? resources.resource0.status.conditions.filter(c, c.type == "Applied")[0].message : "ManifestWork not discovered from Maestro or no Applied condition"
 
           # Available: Check if nested discovered manifests are available on the spoke cluster
           # Each nested discovery is enriched with top-level "conditions" from status.resourceStatus.manifests[]
           - type: "Available"
             status:
               expression: |
-                has(resources.namespace0) && has(resources.namespace0.conditions)
-                  && resources.namespace0.conditions.exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
-                  && has(resources.configmap0) && has(resources.configmap0.conditions)
-                  && resources.configmap0.conditions.exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
+                resources.?namespace0.?conditions.orValue([]).exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
+                  && resources.?configmap0.?conditions.orValue([]).exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
                 ? "True"
                 : "False"
             reason:
               expression: |
-                !(has(resources.namespace0) && has(resources.namespace0.conditions))
-                ? "NamespaceNotDiscovered"
-                : !resources.namespace0.conditions.exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
-                  ? "NamespaceNotAvailable"
-                  : !(has(resources.configmap0) && has(resources.configmap0.conditions))
-                    ? "ConfigMapNotDiscovered"
-                    : !resources.configmap0.conditions.exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
-                      ? "ConfigMapNotAvailable"
-                      : "AllResourcesAvailable"
+                !resources.?namespace0.?conditions.hasValue()
+                  ? "NamespaceNotDiscovered"
+                  : !resources.?namespace0.?conditions.orValue([]).exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
+                    ? "NamespaceNotAvailable"
+                    : !resources.?configmap0.?conditions.hasValue()
+                      ? "ConfigMapNotDiscovered"
+                      : !resources.?configmap0.?conditions.orValue([]).exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
+                        ? "ConfigMapNotAvailable"
+                        : "AllResourcesAvailable"
             message:
               expression: |
-                !(has(resources.namespace0) && has(resources.namespace0.conditions))
-                ? "Namespace not discovered from ManifestWork"
-                : !resources.namespace0.conditions.exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
-                  ? "Namespace not yet available on spoke cluster"
-                  : !(has(resources.configmap0) && has(resources.configmap0.conditions))
-                    ? "ConfigMap not discovered from ManifestWork"
-                    : !resources.configmap0.conditions.exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
-                      ? "ConfigMap not yet available on spoke cluster"
-                      : "All manifests (namespace, configmap) are available on spoke cluster"
+                !resources.?namespace0.?conditions.hasValue()
+                  ? "Namespace not discovered from ManifestWork"
+                  : !resources.?namespace0.?conditions.orValue([]).exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
+                    ? "Namespace not yet available on spoke cluster"
+                    : !resources.?configmap0.?conditions.hasValue()
+                      ? "ConfigMap not discovered from ManifestWork"
+                      : !resources.?configmap0.?conditions.orValue([]).exists(c, has(c.type) && c.type == "Available" && has(c.status) && c.status == "True")
+                        ? "ConfigMap not yet available on spoke cluster"
+                        : "All manifests (namespace, configmap) are available on spoke cluster"
 
           # Health: Adapter execution status — surfaces errors from any phase
           - type: "Health"
@@ -287,6 +297,40 @@ post:
                 : adapter.?resourcesSkipped.orValue(false)
                   ? "Resources skipped: " + adapter.?skipReason.orValue("unknown reason")
                   : "Adapter execution completed successfully"
+
+          # Finalized: Deletion lifecycle completion
+          - type: "Finalized"
+            status:
+              expression: |
+                !is_deleting
+                  ? "False"
+                  : (!resources.?resource0.hasValue()
+                      && !resources.?namespace0.hasValue()
+                      && !resources.?configmap0.hasValue()
+                      ? "True"
+                      : "False")
+            reason:
+              expression: |
+                !is_deleting
+                  ? "ResourceActive"
+                  : (!resources.?resource0.hasValue()
+                      && !resources.?namespace0.hasValue()
+                      && !resources.?configmap0.hasValue()
+                      ? "CleanupConfirmed"
+                      : (adapter.?executionStatus.orValue("") == "failed"
+                          ? "CleanupFailed"
+                          : "CleanupInProgress"))
+            message:
+              expression: |
+                !is_deleting
+                  ? "Resource is active, not scheduled for deletion"
+                  : (!resources.?resource0.hasValue()
+                      && !resources.?namespace0.hasValue()
+                      && !resources.?configmap0.hasValue()
+                      ? "ManifestWork and all nested resources deleted successfully"
+                      : (adapter.?executionStatus.orValue("") == "failed"
+                          ? "Deletion failed during adapter execution"
+                          : "Deletion in progress"))
 
         observed_generation:
           expression: "generation"
