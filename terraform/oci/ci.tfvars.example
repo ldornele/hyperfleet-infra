@@ -77,3 +77,12 @@ sweep_schedule_recurrence = "0 * * * *"
 # postgresql_subnet_id                      = "ocid1.subnet.oc1..REPLACE_ME"
 # postgresql_admin_password_secret_id       = "ocid1.vaultsecret.oc1..REPLACE_ME"
 # postgresql_admin_password_secret_version  = "REPLACE_ME_SECRET_VERSION"
+
+# OKE load balancer NSG policy — lets the OCI cloud controller manager create
+# and manage the frontend NSG for LoadBalancer services (see architecture
+# repo ADR 0024:
+# https://github.com/openshift-hyperfleet/architecture/blob/main/hyperfleet/adrs/0024-oke-load-balancer-security-nsg.md).
+# Disabled by default. Uncomment and point at the compartment that holds the
+# OKE cluster and its VCN.
+# oke_lb_nsg_policy_enabled = true
+# oke_compartment_id        = "ocid1.compartment.oc1..REPLACE_ME"
