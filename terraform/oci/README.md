@@ -158,18 +158,12 @@ the architecture repo's
 
 The CCM authenticates for this specific action as the **cluster resource
 principal** (`request.principal.type = 'cluster'`), not via a worker node's
-instance principal — verified live end-to-end against a test OKE cluster on
-2026-09-21: a `LoadBalancer` service annotated
-`oci.oraclecloud.com/security-rule-management-mode: "NSG"` provisioned
-successfully, the CCM created a frontend NSG with the correct ingress rule,
-and the shared security list was never touched.
+instance principal.
 
-This is not yet wired into this stack: no OKE cluster or VCN exists here yet
-([HYPERFLEET-1525](https://redhat.atlassian.net/browse/HYPERFLEET-1525) is
-still in Backlog), though the IAM mechanism itself is now proven correct.
-Once HYPERFLEET-1525 lands, set `oke_compartment_id` to the compartment
-holding the OKE cluster's VCN and flip `oke_lb_nsg_policy_enabled` to `true`;
-every `LoadBalancer` service manifest in that cluster must then carry the
+This is not yet wired into this stack: no OKE cluster or VCN exists here
+yet. Once one does, set `oke_compartment_id` to the compartment holding the
+OKE cluster's VCN and flip `oke_lb_nsg_policy_enabled` to `true`; every
+`LoadBalancer` service manifest in that cluster must then carry the
 `oci.oraclecloud.com/security-rule-management-mode: "NSG"` annotation to
 actually use the frontend NSG this policy authorizes — the policy alone does
 not annotate anything.

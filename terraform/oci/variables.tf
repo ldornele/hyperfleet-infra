@@ -323,7 +323,7 @@ variable "oke_compartment_id" {
   default     = null
 
   validation {
-    condition     = !var.oke_lb_nsg_policy_enabled || var.oke_compartment_id != null
-    error_message = "oke_compartment_id is required when oke_lb_nsg_policy_enabled is true."
+    condition     = !var.oke_lb_nsg_policy_enabled || try(trimspace(var.oke_compartment_id), "") != ""
+    error_message = "oke_compartment_id is required and cannot be empty or whitespace-only when oke_lb_nsg_policy_enabled is true."
   }
 }

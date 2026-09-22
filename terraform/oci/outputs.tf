@@ -22,3 +22,8 @@ output "postgresql_primary_db_endpoint_private_ip" {
   description = "Private IP of the managed PostgreSQL db system's primary endpoint, if postgresql_enabled is true."
   value       = try(module.managed_postgresql[0].primary_db_endpoint_private_ip, null)
 }
+
+output "oke_lb_nsg_policy_id" {
+  description = "OCID of the OKE load balancer NSG policy, if oke_lb_nsg_policy_enabled is true."
+  value       = try(module.oke_lb_nsg_policy[0].policy_id, null)
+}
