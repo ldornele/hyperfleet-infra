@@ -68,6 +68,13 @@ resource "google_container_cluster" "primary" {
   # When enabled, prevents deletion via GCP Console, API, and Terraform
   # Must be set to false before cluster can be destroyed
   deletion_protection = var.enable_deletion_protection
+
+  lifecycle {
+    precondition {
+      condition     = !var.enable_calico_network_policy || var.datapath_provider == ""
+      error_message = "enable_calico_network_policy requires datapath_provider = \"\" (legacy datapath). Dataplane V2 enforces NetworkPolicy natively and GKE rejects Calico on it."
+    }
+  }
 }
 
 resource "google_container_node_pool" "primary" {
