@@ -81,6 +81,18 @@ module "managed_postgresql" {
   depends_on = [terraform_data.postgresql_regional_durability_check]
 }
 
+module "oke_lb_nsg_policy" {
+  count = var.oke_lb_nsg_policy_enabled ? 1 : 0
+
+  source         = "../modules/oke-lb-nsg-policy/oci"
+  compartment_id = var.oke_compartment_id
+
+  freeform_tags = {
+    "hyperfleet-managed-by" = "terraform"
+    "hyperfleet-purpose"    = "oke-lb-security"
+  }
+}
+
 locals {
   tags = {
     "hyperfleet-managed-by" = "terraform"

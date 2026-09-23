@@ -296,3 +296,34 @@ variable "postgresql_backup_start" {
   type        = string
   default     = "02:00"
 }
+
+# Disabled by default: no OKE cluster or VCN exists in this stack yet
+# (HYPERFLEET-1525 is still in Backlog). This grants the IAM permissions
+# architecture ADR 0024 requires ahead of that work landing, so the OKE
+# cloud controller manager can create and manage a frontend NSG per
+# LoadBalancer service instead of editing a Terraform-owned security list.
+
+variable "oke_lb_nsg_policy_enabled" {
+  description = <<-EOT
+    Whether to create the IAM policy letting the OKE cloud controller manager
+    manage the frontend NSG for LoadBalancer services (see architecture ADR
+    0024). Disabled by default — no OKE cluster/VCN exists in this stack yet
+    (HYPERFLEET-1525).
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "oke_compartment_id" {
+  description = <<-EOT
+    OCID of the compartment that will contain the OKE cluster and its VCN.
+    No default: required once oke_lb_nsg_policy_enabled is true.
+  EOT
+  type        = string
+  default     = null
+
+  validation {
+    condition     = !var.oke_lb_nsg_policy_enabled || try(trimspace(var.oke_compartment_id), "") != ""
+    error_message = "oke_compartment_id is required and cannot be empty or whitespace-only when oke_lb_nsg_policy_enabled is true."
+  }
+}

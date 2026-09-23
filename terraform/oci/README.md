@@ -147,6 +147,27 @@ lookup in the module) rather than hardcoding one; with
 resolves to a single AD in `us-sanjose-1` today because it's the tenancy's
 only one there.
 
+## OKE load balancer NSG policy (scaffolding)
+
+`oke_lb_nsg_policy_enabled` (default `false`) creates the IAM policy the OCI
+cloud controller manager needs to create and manage a dedicated **frontend
+NSG** per `LoadBalancer` service, instead of editing the security list
+Terraform owns for node and control-plane traffic — the decision recorded in
+the architecture repo's
+[ADR 0024](https://github.com/openshift-hyperfleet/architecture/blob/main/hyperfleet/adrs/0024-oke-load-balancer-security-nsg.md).
+
+The CCM authenticates for this specific action as the **cluster resource
+principal** (`request.principal.type = 'cluster'`), not via a worker node's
+instance principal.
+
+This is not yet wired into this stack: no OKE cluster or VCN exists here
+yet. Once one does, set `oke_compartment_id` to the compartment holding the
+OKE cluster's VCN and flip `oke_lb_nsg_policy_enabled` to `true`; every
+`LoadBalancer` service manifest in that cluster must then carry the
+`oci.oraclecloud.com/security-rule-management-mode: "NSG"` annotation to
+actually use the frontend NSG this policy authorizes — the policy alone does
+not annotate anything.
+
 ## Notifications
 
 **Owner:** `#hcm-hyperfleet-team`.
@@ -230,7 +251,7 @@ for backend setup and team access.
 | `terraform/oci/ci.tfvars.example` | Compartment, quota, budget, and sweep configuration |
 | `terraform/oci/ci.tfbackend.example` | Remote state configuration |
 | `terraform/oci/main.tf` | Root module wiring the compartment, quota, budget, and sweep modules |
-| `terraform/modules/{compartment,quota,budget,lifecycle,postgresql}/oci/` | Individual resource modules |
+| `terraform/modules/{compartment,quota,budget,lifecycle,postgresql,oke-lb-nsg-policy}/oci/` | Individual resource modules |
 | `functions/oci-ci-sweep/` | The sweep function's Go source |
 
 ## Troubleshooting
