@@ -17,7 +17,41 @@ resource "google_container_cluster" "primary" {
   # Without this, helm/network-policies' NetworkPolicy objects are inert.
   # NOTE: immutable after cluster creation — changing this on an existing
   # cluster requires recreating it, not an in-place update.
-  datapath_provider = "ADVANCED_DATAPATH"
+  # Shared clusters created before Dataplane V2 (e.g., Prow) override this
+  # with "" so Terraform keeps their existing datapath.
+  datapath_provider = var.datapath_provider == "" ? null : var.datapath_provider
+
+  # Calico NetworkPolicy enforcement, only for legacy-datapath clusters.
+  # Dataplane V2 enforces NetworkPolicy natively and must not enable this.
+  dynamic "network_policy" {
+    for_each = var.enable_calico_network_policy ? [1] : []
+    content {
+      enabled  = true
+      provider = "CALICO"
+    }
+  }
+
+  dynamic "addons_config" {
+    for_each = var.enable_calico_network_policy ? [1] : []
+    content {
+      network_policy_config {
+        disabled = false
+      }
+    }
+  }
+
+  # Recurring maintenance window for automatic upgrades (times in UTC).
+  # Without one, GKE upgrades at any time and drains nodes mid test run.
+  dynamic "maintenance_policy" {
+    for_each = var.maintenance_recurring_window == null ? [] : [var.maintenance_recurring_window]
+    content {
+      recurring_window {
+        start_time = maintenance_policy.value.start_time
+        end_time   = maintenance_policy.value.end_time
+        recurrence = maintenance_policy.value.recurrence
+      }
+    }
+  }
 
   # We manage the node pool separately
   remove_default_node_pool = true

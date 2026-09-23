@@ -70,6 +70,28 @@ variable "services_range_name" {
   default     = "services"
 }
 
+variable "datapath_provider" {
+  description = "GKE datapath provider. Immutable after creation, changing it recreates the cluster. Empty string keeps the GKE default (legacy) datapath"
+  type        = string
+  default     = "ADVANCED_DATAPATH"
+}
+
+variable "enable_calico_network_policy" {
+  description = "Enable Calico NetworkPolicy enforcement. Only for clusters on the legacy datapath (datapath_provider = \"\"), Dataplane V2 enforces NetworkPolicy natively"
+  type        = bool
+  default     = false
+}
+
+variable "maintenance_recurring_window" {
+  description = "Recurring GKE maintenance window (RFC3339 UTC start/end of the first occurrence plus an RFC5545 RRULE). Null leaves GKE free to upgrade at any time"
+  type = object({
+    start_time = string
+    end_time   = string
+    recurrence = string
+  })
+  default = null
+}
+
 variable "enable_deletion_protection" {
   description = "Enable deletion protection for the cluster (recommended for shared/production clusters)"
   type        = bool
