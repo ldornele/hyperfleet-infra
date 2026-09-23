@@ -58,6 +58,28 @@ variable "use_spot_vms" {
   default     = true
 }
 
+variable "datapath_provider" {
+  description = "GKE datapath provider (ADVANCED_DATAPATH = Dataplane V2). Immutable after creation, changing it recreates the cluster. Empty string keeps the GKE default (legacy) datapath, used by clusters created before Dataplane V2 like Prow"
+  type        = string
+  default     = "ADVANCED_DATAPATH"
+}
+
+variable "enable_calico_network_policy" {
+  description = "Enable Calico NetworkPolicy enforcement. Only for clusters on the legacy datapath (datapath_provider = \"\") like Prow, Dataplane V2 enforces NetworkPolicy natively"
+  type        = bool
+  default     = false
+}
+
+variable "maintenance_recurring_window" {
+  description = "Recurring GKE maintenance window (RFC3339 UTC start/end of the first occurrence plus an RFC5545 RRULE). Null leaves GKE free to upgrade at any time, set it for shared clusters like Prow"
+  type = object({
+    start_time = string
+    end_time   = string
+    recurrence = string
+  })
+  default = null
+}
+
 variable "enable_deletion_protection" {
   description = "Enable deletion protection for the cluster (recommended for shared/production clusters like Prow)"
   type        = bool

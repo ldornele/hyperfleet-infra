@@ -49,6 +49,10 @@ use_spot_vms = true           # ~70% cost savings, may be preempted
 # To destroy a protected cluster: set to false, apply, then destroy
 enable_deletion_protection = false
 
+# GKE datapath (immutable, changing it recreates the cluster)
+# Default: ADVANCED_DATAPATH (Dataplane V2, needed for NetworkPolicy enforcement)
+# datapath_provider = "ADVANCED_DATAPATH"
+
 # =============================================================================
 # Pub/Sub Configuration (for HyperFleet messaging)
 # =============================================================================

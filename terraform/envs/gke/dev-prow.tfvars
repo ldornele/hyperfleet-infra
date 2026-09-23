@@ -44,6 +44,25 @@ use_spot_vms = false           # ~70% cost savings, may be preempted
 # To destroy, you must first set this to false, apply, then destroy
 enable_deletion_protection = true
 
+# Prow was created before Dataplane V2 and runs the GKE default (legacy)
+# datapath. The field is immutable, so leaving the ADVANCED_DATAPATH default
+# makes Terraform plan a cluster replacement, which destroys the node pool
+# first. Keep this as "" unless the cluster is deliberately being rebuilt.
+datapath_provider = ""
+
+# Legacy datapath has no native NetworkPolicy enforcement, so Prow runs Calico
+# (originally enabled by hand). Without this, Terraform would disable it.
+enable_calico_network_policy = true
+
+# Automatic GKE upgrades drain the node and restart Maestro, so keep them away
+# from the nightlies (09:30, 11:30, 13:30 UTC daily) and weekday presubmits.
+# Saturday and Sunday 18:00-06:00 UTC, 24h a week (GKE needs 48h in 32 days).
+maintenance_recurring_window = {
+  start_time = "2026-09-26T18:00:00Z"
+  end_time   = "2026-09-27T06:00:00Z"
+  recurrence = "FREQ=WEEKLY;BYDAY=SA,SU"
+}
+
 # =============================================================================
 # Pub/Sub Configuration (for HyperFleet messaging)
 # =============================================================================
