@@ -966,13 +966,12 @@ validate-namespace-cleaner: check-helm ## Validate namespace-cleaner Helm chart 
 	@echo "OK: namespace-cleaner chart rendered with scheduled-run replacement and critical priority"
 
 .PHONY: ci-validate
-ci-validate: validate-terraform lint-helm lint-shellcheck ## Ci validate: validate terraform (all stacks) + lint helm + lint shellcheck
+ci-validate: validate-terraform lint-helm lint-shellcheck validate-authorino ## Ci validate: validate terraform (all stacks) + lint helm + lint shellcheck + validate authorino
 
 .PHONY: ci-dry-run
-ci-dry-run: ci-validate ## Ci dry-run: ci-validate + validate maestro + validate authorino + validate network policies + validate namespace cleaner + validate mock OIDC
+ci-dry-run: ci-validate ## Ci dry-run: ci-validate + validate maestro + validate network policies + validate namespace cleaner + validate mock OIDC
 	$(MAKE) validate-maestro
 	$(MAKE) validate-mock-oidc
-	$(MAKE) validate-authorino
 	$(MAKE) validate-network-policies
 	$(MAKE) validate-namespace-cleaner
 

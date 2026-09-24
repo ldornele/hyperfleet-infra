@@ -11,7 +11,7 @@ Pure infrastructure-as-code. No application code, no compiled artifacts. Provisi
 ## Validation / CI commands
 
 ```bash
-make ci-validate     # validate terraform + lint helm + lint shellcheck
+make ci-validate     # validate terraform + lint helm + lint shellcheck + validate authorino
 make ci-dry-run      # ci-validate + validate maestro
 ```
 
